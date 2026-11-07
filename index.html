@@ -151,11 +151,37 @@ _flutter.loader.load({
 </div>
 <script>
 (function(){
+  var box=document.getElementById('adsterra-native-wrap');
   var close=document.getElementById('adsterra-native-close');
+  var dismissed=false;
+  var lastRoute=location.href;
+  function showForNewPage(){
+    if(box){box.style.display=''; dismissed=false;}
+  }
   if(close) close.addEventListener('click',function(){
-    var box=document.getElementById('adsterra-native-wrap');
-    if(box) box.style.display='none';
+    if(box){box.style.display='none'; dismissed=true;}
   });
+  /* Flutter changes the browser URL when moving to another internal page. */
+  ['pushState','replaceState'].forEach(function(name){
+    var original=history[name];
+    if(typeof original==='function') history[name]=function(){
+      var result=original.apply(this,arguments);
+      setTimeout(function(){
+        if(location.href!==lastRoute){lastRoute=location.href;showForNewPage();}
+      },150);
+      return result;
+    };
+  });
+  window.addEventListener('popstate',function(){
+    if(location.href!==lastRoute){lastRoute=location.href;showForNewPage();}
+  });
+  window.addEventListener('hashchange',function(){
+    if(location.href!==lastRoute){lastRoute=location.href;showForNewPage();}
+  });
+  /* Fallback for routers that update the URL without dispatching an event. */
+  setInterval(function(){
+    if(location.href!==lastRoute){lastRoute=location.href;showForNewPage();}
+  },500);
 })();
 </script>
 <script async="async" data-cfasync="false" src="https://bauval.org/21/b0af98452d59bc40a364774899a33a1c"></script>
